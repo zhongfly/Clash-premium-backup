@@ -39,8 +39,7 @@ jobs:
           tag_name = name.string.split("T")[0]
           env_file = os.getenv('GITHUB_ENV')
           with open(env_file, "a") as GITHUB_ENV:
-              GITHUB_ENV.write(f"name={name.string}")
-              GITHUB_ENV.write(f"tag_name={tag_name}")
+              GITHUB_ENV.write(f"name={name.string}\ntag_name={tag_name}")
           print(name.string)
           tags = html.find_all("a",href=re.compile("clash.*"))
           for tag in tags:
