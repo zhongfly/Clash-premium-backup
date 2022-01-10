@@ -36,9 +36,11 @@ jobs:
           res = requests.get(source, headers=headers)
           html = BeautifulSoup(res.content, "lxml")
           name = html.find("h1")
+          tag_name = name.string.split("T")[0]
           env_file = os.getenv('GITHUB_ENV')
           with open(env_file, "a") as GITHUB_ENV:
               GITHUB_ENV.write(f"name={name.string}")
+              GITHUB_ENV.write(f"tag_name={tag_name}")
           print(name.string)
           tags = html.find_all("a",href=re.compile("clash.*"))
           for tag in tags:
@@ -60,10 +62,10 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add version
           git diff-index --quiet HEAD || ( git commit -m "${{ env.name }}" && git push origin version )
-          if [ $(git tag -l "${{ env.name }}") ] ;then
-            gh release delete "${{ env.name }}" || true
-            git push --delete origin "${{ env.name }}" || true
-            git tag -d "${{ env.name }}" || true
+          if [ $(git tag -l "${{ env.tag_name }}") ] ;then
+            gh release delete "${{ env.tag_name }}" || true
+            git push --delete origin "${{ env.tag_name }}" || true
+            git tag -d "${{ env.tag_name }}" || true
           fi
           git checkout main
           
@@ -73,7 +75,7 @@ jobs:
           artifacts: "clash*"
           commit: version
           name: "${{ env.name }}"
-          tag: "${{ env.name }}"
+          tag: "${{ env.tag_name }}"
           allowUpdates: true
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
