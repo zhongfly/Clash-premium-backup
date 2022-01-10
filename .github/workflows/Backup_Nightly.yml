@@ -38,7 +38,7 @@ jobs:
           res = requests.get(source, headers=headers)
           html = BeautifulSoup(res.content, "lxml")
           name = html.find("h1")
-          tag_name = name.string.split("T")[0]
+          tag_name = name.string.replace(':','-')
           env_file = os.getenv('GITHUB_ENV')
           with open(env_file, "a") as GITHUB_ENV:
               GITHUB_ENV.write(f"name={name.string}\ntag_name={tag_name}")
