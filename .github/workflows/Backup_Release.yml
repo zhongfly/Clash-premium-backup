@@ -52,6 +52,7 @@ jobs:
           artifacts: "release/*"
           commit: version
           name: "${{ steps.get_name.outputs.name }}"
+          body: ""
           tag: "${{ steps.get_name.outputs.tag_name }}"
           allowUpdates: true
           removeArtifacts: true

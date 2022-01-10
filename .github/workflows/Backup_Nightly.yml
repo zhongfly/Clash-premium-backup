@@ -71,6 +71,7 @@ jobs:
           artifacts: "clash*"
           commit: version
           name: "${{ env.name }}"
+          body: ""
           tag: "${{ env.tag_name }}"
           allowUpdates: true
           prerelease: false
