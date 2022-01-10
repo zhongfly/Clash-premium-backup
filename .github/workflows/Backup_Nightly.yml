@@ -1,4 +1,4 @@
-name: Backup
+name: Backup Nightly
 
 on:
   schedule:
@@ -58,16 +58,11 @@ jobs:
         run: |
           git fetch --tags
           git checkout version || git checkout -b version origin/version || ( git checkout --orphan version && git rm -rf . )
-          echo -e "${{ env.name }}" > version
+          echo -e "${{ env.name }}" > nightly_version
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add version
+          git add nightly_version
           git diff-index --quiet HEAD || ( git commit -m "${{ env.name }}" && git push origin version )
-          if [ $(git tag -l "${{ env.tag_name }}") ] ;then
-            gh release delete "${{ env.tag_name }}" || true
-            git push --delete origin "${{ env.tag_name }}" || true
-            git tag -d "${{ env.tag_name }}" || true
-          fi
           git checkout main
           
       - name: Create release
