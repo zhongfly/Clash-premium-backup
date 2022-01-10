@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v2
       - name: Dependencies
         run: |
           pip3 install beautifulsoup4 lxml requests
