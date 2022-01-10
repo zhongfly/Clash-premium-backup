@@ -1,0 +1,59 @@
+name: Backup Release
+
+on:
+  schedule:
+    - cron:  '0 16 * * *'
+  workflow_dispatch:
+  
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: 'Get Release title'
+        id: get_name
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const res = await github.rest.repos.getReleaseByTag({
+              owner: 'Dreamacro',
+              repo: 'clash',
+              tag: `premium`
+            })
+            core.setOutput('name', String(res.data.name))
+            core.setOutput('tag_name', String(res.data.name).replace(' ','-'))
+      - name: download
+        uses: robinraju/release-downloader@v1.3
+        with: 
+          repository: "Dreamacro/clash"
+          tag: "premium"
+          fileName: "*"
+          tarBall: false
+          zipBall: false
+          out-file-path: "release"
+      - name: Commit version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          git fetch --tags
+          git checkout version || git checkout -b version origin/version || ( git checkout --orphan version && git rm -rf . )
+          echo -e "${{ steps.get_name.outputs.name }}" > release_version
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version
+          git diff-index --quiet HEAD || ( git commit -m "${{ steps.get_name.outputs.name }}" && git push origin version )
+          git checkout main
+          
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "release/*"
+          commit: version
+          name: "${{ steps.get_name.outputs.name }}"
+          tag: "${{ steps.get_name.outputs.tag_name }}"
+          allowUpdates: true
+          removeArtifacts: true
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
