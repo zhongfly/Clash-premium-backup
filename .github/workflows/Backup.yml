@@ -1,0 +1,78 @@
+name: Backup
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Dependencies
+        run: |
+          pip3 install beautifulsoup4 lxml requests
+      - name: download
+        shell: python
+        run: |
+          import requests
+          from bs4 import BeautifulSoup
+          from urllib.parse import urljoin
+          import os
+          import re
+          
+          source = "https://clash-premium-nightly.pages.dev/"
+          headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"}
+          
+          def download(url, path):
+              r = requests.get(url, headers=headers, stream=True)
+              r.raise_for_status()
+              f = open(path, "wb")
+              for chunk in r.iter_content(chunk_size=1024):
+                  if chunk:
+                      f.write(chunk)
+              f.close()
+          
+          res = requests.get(source, headers=headers)
+          html = BeautifulSoup(res.content, "lxml")
+          name = html.find("h1")
+          env_file = os.getenv('GITHUB_ENV')
+          with open(env_file, "a") as GITHUB_ENV:
+              GITHUB_ENV.write(f"name={name.string}")
+          print(name.string)
+          tags = html.find_all("a",href=re.compile("clash.*"))
+          for tag in tags:
+            url = urljoin(source,tag['href'])
+            print(f"downloading link: {url}", flush=True)
+            out_file = tag['href']
+            if not os.path.isfile(out_file):
+              download(url, out_file)
+
+      - name: Commit version & remove existing tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          git fetch --tags
+          git checkout version || git checkout -b version origin/version || ( git checkout --orphan version && git rm -rf . )
+          echo -e "${{ env.name }}" > version
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version
+          git diff-index --quiet HEAD || ( git commit -m "${{ env.name }}" && git push origin version )
+          if [ $(git tag -l "${{ env.name }}") ] ;then
+            gh release delete "${{ env.name }}" || true
+            git push --delete origin "${{ env.name }}" || true
+            git tag -d "${{ env.name }}" || true
+          fi
+          git checkout main
+          
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "clash*"
+          commit: version
+          name: "${{ env.name }}"
+          tag: "${{ env.name }}"
+          allowUpdates: true
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
