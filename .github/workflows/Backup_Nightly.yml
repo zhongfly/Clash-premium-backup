@@ -22,10 +22,11 @@ jobs:
           from urllib.parse import urljoin
           import os
           import re
-          
-          source = "https://clash-premium-nightly.pages.dev/"
+
+          base = "https://nightly.icpz.workers.dev/"
+          source = "https://nightly.icpz.workers.dev/latest/"
           headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"}
-          
+
           def download(url, path):
               r = requests.get(url, headers=headers, stream=True)
               r.raise_for_status()
@@ -34,22 +35,23 @@ jobs:
                   if chunk:
                       f.write(chunk)
               f.close()
-          
+
           res = requests.get(source, headers=headers)
           html = BeautifulSoup(res.content, "lxml")
-          name = html.find("h1")
-          tag_name = name.string.replace(':','-')
+          tags = html.select("li > div > a")
+
+          tag_name = re.search(r"202\d-\d{2}-\d{2}-g\w{7}",tags[0].string).group(0)
+          print(tag_name)
           env_file = os.getenv('GITHUB_ENV')
           with open(env_file, "a") as GITHUB_ENV:
-              GITHUB_ENV.write(f"name={name.string}\ntag_name={tag_name}")
-          print(name.string)
-          tags = html.find_all("a",href=re.compile("clash.*"))
+              GITHUB_ENV.write(f"tag_name={tag_name}")
+
           for tag in tags:
-            url = urljoin(source,tag['href'])
-            print(f"downloading link: {url}", flush=True)
-            out_file = tag['href']
-            if not os.path.isfile(out_file):
-              download(url, out_file)
+              url = urljoin(base,tag['href'])
+              print(f"Downloading link: {url}", flush=True)
+              out_file = tag.string
+              if not os.path.isfile(out_file):
+                  download(url, out_file)
 
       - name: Commit version & remove existing tag
         env:
@@ -58,11 +60,11 @@ jobs:
         run: |
           git fetch --tags
           git checkout version || git checkout -b version origin/version || ( git checkout --orphan version && git rm -rf . )
-          echo -e "${{ env.name }}" > nightly_version
+          echo -e "${{ env.tag_name }}" > nightly_version
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add nightly_version
-          git diff-index --quiet HEAD || ( git commit -m "${{ env.name }}" && git push origin version )
+          git diff-index --quiet HEAD || ( git commit -m "${{ env.tag_name }}" && git push origin version )
           git checkout main
           
       - name: Create release
@@ -70,7 +72,7 @@ jobs:
         with:
           artifacts: "clash*"
           commit: version
-          name: "${{ env.name }}"
+          name: "${{ env.tag_name }}"
           body: ""
           tag: "${{ env.tag_name }}"
           allowUpdates: true
