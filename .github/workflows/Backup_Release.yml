@@ -52,7 +52,7 @@ jobs:
           artifacts: "release/*"
           commit: version
           name: "${{ steps.get_name.outputs.name }}"
-          body: ""
+          body: "**Downloads**: ![downloads](https://badgen.net/github/assets-dl/${{github.repository}}/${{ env.short_time }}?cache=300)"
           tag: "${{ steps.get_name.outputs.tag_name }}"
           allowUpdates: true
           removeArtifacts: true

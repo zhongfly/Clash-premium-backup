@@ -73,7 +73,7 @@ jobs:
           artifacts: "clash*"
           commit: version
           name: "${{ env.tag_name }}"
-          body: ""
+          body: "**Downloads**: ![downloads](https://badgen.net/github/assets-dl/${{github.repository}}/${{ env.short_time }}?cache=300)"
           tag: "${{ env.tag_name }}"
           allowUpdates: true
           prerelease: false
