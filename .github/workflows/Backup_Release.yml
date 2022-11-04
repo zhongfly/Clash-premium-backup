@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: 'Get Release title'
         id: get_name
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           script: |
             const res = await github.rest.repos.getReleaseByTag({
@@ -24,11 +24,10 @@ jobs:
             core.setOutput('name', String(res.data.name))
             core.setOutput('tag_name', String(res.data.name).replace(' ','-'))
       - name: download
-        uses: robinraju/release-downloader@v1.3
+        uses: robinraju/release-downloader@v1.6
         with: 
           repository: "Dreamacro/clash"
           tag: "premium"
-          fileName: "*"
           tarBall: false
           zipBall: false
           out-file-path: "release"
@@ -52,7 +51,7 @@ jobs:
           artifacts: "release/*"
           commit: version
           name: "${{ steps.get_name.outputs.name }}"
-          body: "**Downloads**: ![downloads](https://badgen.net/github/assets-dl/${{github.repository}}/${{ env.short_time }}?cache=300)"
+          body: "**Downloads**: ![downloads](https://badgen.net/github/assets-dl/${{github.repository}}/${{ steps.get_name.outputs.name }}?cache=300)"
           tag: "${{ steps.get_name.outputs.tag_name }}"
           allowUpdates: true
           removeArtifacts: true

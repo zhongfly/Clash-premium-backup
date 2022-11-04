@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Dependencies
         run: |
           pip3 install beautifulsoup4 lxml requests
@@ -73,7 +73,7 @@ jobs:
           artifacts: "clash*"
           commit: version
           name: "${{ env.tag_name }}"
-          body: "**Downloads**: ![downloads](https://badgen.net/github/assets-dl/${{github.repository}}/${{ env.short_time }}?cache=300)"
+          body: "**Downloads**: ![downloads](https://badgen.net/github/assets-dl/${{github.repository}}/${{ env.tag_name }}?cache=300)"
           tag: "${{ env.tag_name }}"
           allowUpdates: true
           prerelease: false
